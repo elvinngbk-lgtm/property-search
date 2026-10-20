@@ -242,10 +242,11 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
 <dialog id="shortlist"></dialog>
 <div class="toast" id="toast"></div>
 
-<script src="data.js"></script>
+<script src="properties.js"></script>
 <script>
-(() => {
-const DATA = window.PROPERTY_DATA;
+(async () => {
+document.getElementById("results").innerHTML = `<div class="empty">Loading properties…</div>`;
+const DATA = await window.loadProperties();
 const P = DATA.properties;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -646,7 +647,9 @@ document.addEventListener("keydown", e => { if (e.key === "/" && document.active
 const areaCount = new Set(P.map(p => p.area)).size;
 const med = (a => a[Math.floor(a.length / 2)])(P.map(p => p.cashPct).filter(x => x != null).sort((a, b) => a - b));
 $("#heroStats").textContent = `${P.length} projects across ${areaCount} areas · median CashOut ${med}%`;
-$("#upd").innerHTML = `Data updated<br><b>${esc(DATA.updated)}</b>`;
+const t = DATA.loaded.toLocaleTimeString("en-MY", {hour: "numeric", minute: "2-digit"});
+$("#upd").innerHTML = DATA.source === "live" ? `Live from Google Sheet<br><b>as of ${t}</b>` : `Offline copy<br><b>sheet unreachable</b>`;
+if (DATA.skipped.length) console.warn("Rows skipped (missing name or price):", DATA.skipped);
 buildChips(); readURL(); update();
 })();
 </script>
