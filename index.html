@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MortgageGuru Property Search</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#152843; --navy-2:#1B2A4A; --navy-3:#24385e;
+  --yellow:#FFC41C; --gold:#EBBB33; --gold-dk:#B8860B;
+  --green:#1E7A3C; --green-bg:#E7F4EC; --red:#C0392B; --red-bg:#FBECEA;
+  --bg:#F5F6F8; --card:#fff; --ink:#152843; --ink-2:#4A5873; --ink-3:#8590A6;
+  --line:#E3E6EC; --chip:#EEF1F5; --radius:14px;
+  --shadow:0 1px 2px rgba(21,40,67,.06),0 4px 14px rgba(21,40,67,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+
+/* Header */
+header.top{background:#fff;border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:12px;height:64px}
+header.top img{height:44px;width:auto}
+header.top .ttl{font-weight:800;font-size:15px;letter-spacing:.2px;border-left:1px solid var(--line);padding-left:12px;color:var(--ink-2)}
+header.top .upd{margin-left:auto;font-size:12px;color:var(--ink-3);text-align:right}
+
+/* Hero search */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-3) 100%);color:#fff;padding:22px 0 26px}
+.hero h1{margin:0 0 4px;font-size:clamp(20px,3.2vw,28px);font-weight:800;letter-spacing:-.3px}
+.hero h1 span{color:var(--yellow)}
+.hero p{margin:0 0 16px;color:#C6CEDD;font-size:14px}
+.searchbox{position:relative}
+.searchbox input{width:100%;height:54px;border-radius:12px;border:2px solid transparent;padding:0 48px 0 48px;font-size:16px;background:#fff;color:var(--ink);outline:none;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.searchbox input:focus{border-color:var(--yellow)}
+.searchbox svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.searchbox .clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:var(--chip);width:30px;height:30px;border-radius:50%;display:none;font-size:16px;line-height:1}
+.searchbox.has .clear{display:block}
+.hint{margin-top:10px;font-size:12.5px;color:#AEB8CB}
+.hint b{color:#fff;font-weight:600;cursor:pointer;border-bottom:1px dashed #6f7d99}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:270px 1fr;gap:22px;padding:22px 16px 60px;max-width:1280px;margin:0 auto}
+@media (max-width:900px){.layout{grid-template-columns:1fr;padding-top:14px}}
+
+/* Filters */
+aside.filters{align-self:start;position:sticky;top:14px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.fhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.fhead h2{margin:0;font-size:15px;font-weight:800}
+.linkbtn{border:0;background:none;color:var(--gold-dk);font-weight:700;font-size:13px;padding:4px}
+.fgroup{padding:12px 0;border-top:1px solid var(--line)}
+.fgroup:first-of-type{border-top:0}
+.fgroup label.lbl{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-3);margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.chips button[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
+select.sel{width:100%;height:40px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.range{width:100%;accent-color:var(--gold-dk)}
+.rangeval{font-weight:700;font-size:13px;color:var(--green)}
+.check{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-2);margin-top:4px}
+.check input{accent-color:var(--navy);width:16px;height:16px}
+.fclose{display:none}
+@media (max-width:900px){
+  aside.filters{position:fixed;inset:auto 0 0 0;top:auto;max-height:86vh;overflow:auto;border-radius:18px 18px 0 0;z-index:40;transform:translateY(105%);transition:transform .25s ease;padding-bottom:84px}
+  aside.filters.open{transform:none}
+  .fclose{display:block;position:fixed;left:16px;right:16px;bottom:16px;height:48px;border:0;border-radius:12px;background:var(--navy);color:#fff;font-weight:700}
+  aside.filters:not(.open) .fclose{display:none}
+}
+.scrim{position:fixed;inset:0;background:rgba(10,20,40,.45);z-index:30;display:none}
+.scrim.show{display:block}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.count{font-weight:800;font-size:16px}
+.count small{font-weight:500;color:var(--ink-3);font-size:13px}
+.toolbar .sp{flex:1}
+.tbtn{height:38px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:0 12px;font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:6px}
+.tbtn.primary{background:var(--yellow);border-color:var(--yellow);color:var(--navy)}
+.tbtn .badge{background:var(--navy);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px}
+.only-mobile{display:none}
+@media (max-width:900px){.only-mobile{display:inline-flex}}
+@media (max-width:520px){.toolbar .count{width:100%}.toolbar .sp{display:none}select.sort{flex:1;min-width:0}header.top .upd{display:none}}
+select.sort{height:38px;border:1px solid var(--line);border-radius:10px;padding:0 8px;background:#fff;font-weight:600;font-size:13.5px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;height:36px;padding:0 12px;font-weight:600;font-size:13px;color:var(--ink-2)}
+.seg button[aria-pressed=true]{background:var(--navy);color:#fff}
+@media (max-width:640px){.seg{display:none}}
+.active-filters{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 14px}
+.active-filters button{border:0;background:#FFF4D1;color:#6b4e00;border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600}
+
+/* Cards */
+main{min-width:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(290px,100%),1fr));gap:14px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;border:1px solid transparent;transition:border-color .15s,transform .15s;position:relative}
+.card:hover{border-color:var(--gold);transform:translateY(-1px)}
+.card .nm{font-weight:800;font-size:16px;line-height:1.25;padding-right:34px}
+.card .loc{font-size:13px;color:var(--ink-3);margin-top:2px}
+.star{position:absolute;top:12px;right:12px;border:0;background:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#C5CBD6}
+.star:hover{background:var(--chip)}
+.star[aria-pressed=true]{color:var(--gold)}
+.prices{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);border-radius:10px;padding:10px 12px}
+.prices .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3)}
+.prices .v{font-weight:800;font-size:15px}
+.cash{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:10px;padding:8px 12px;background:var(--green-bg);color:var(--green);font-weight:700;font-size:13.5px}
+.cash.neg{background:var(--red-bg);color:var(--red)}
+.cash .pct{font-size:18px;font-weight:800}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{background:var(--chip);border-radius:6px;padding:3px 8px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.tag.warn{background:#FFF4D1;color:#7a5800}
+.empty{background:#fff;border-radius:var(--radius);padding:40px 20px;text-align:center;color:var(--ink-2);box-shadow:var(--shadow)}
+
+/* Table */
+.tablewrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:900px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:#FAFBFC;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3);cursor:pointer;user-select:none}
+th.num,td.num{text-align:right}
+th[aria-sort] {color:var(--navy)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#FFFBEC}
+td.nm{font-weight:700;white-space:normal;min-width:200px}
+td .g{color:var(--green);font-weight:700}
+td .r{color:var(--red);font-weight:700}
+
+/* Modal / drawer */
+dialog{border:0;border-radius:18px;padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 40px);box-shadow:0 20px 60px rgba(0,0,0,.3);color:var(--ink)}
+dialog::backdrop{background:rgba(10,20,40,.5)}
+.mhead{background:var(--navy);color:#fff;padding:18px 20px;position:sticky;top:0;z-index:1}
+.mhead h3{margin:0;font-size:20px;font-weight:800;padding-right:36px}
+.mhead .loc{color:#C6CEDD;font-size:13.5px;margin-top:2px}
+.mclose{position:absolute;top:14px;right:14px;border:0;background:rgba(255,255,255,.12);color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px}
+.mbody{padding:18px 20px 22px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+@media (max-width:520px){.facts{grid-template-columns:repeat(2,1fr)}}
+.fact{background:var(--bg);border-radius:10px;padding:9px 11px}
+.fact .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3)}
+.fact .v{font-weight:700;font-size:14.5px}
+.fact.hl{background:var(--green-bg)} .fact.hl .v{color:var(--green)}
+.fact.bad{background:var(--red-bg)} .fact.bad .v{color:var(--red)}
+.mbody h4{margin:16px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-3)}
+.notes{margin:0;padding-left:18px;color:var(--ink-2);font-size:14px}
+.notes li{margin:3px 0}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.note-warn{background:#FFF4D1;color:#6b4e00;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.sl-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sl-item .nm{font-weight:700}
+.sl-item .meta{font-size:12.5px;color:var(--ink-3)}
+.sl-item button{margin-left:auto}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%)}
+footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <img src="logo.png" alt="MortgageGuru">
+  <div class="ttl">Property Search</div>
+  <div class="upd" id="upd"></div>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <h1>Find the right unit, <span>see the CashOut</span> instantly</h1>
+  <p id="heroStats"></p>
+  <div class="searchbox" id="sbox">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" autocomplete="off" placeholder="Search name, area, taman… e.g. “cheras 3r under 350k”">
+    <button class="clear" id="qclear" aria-label="Clear search">×</button>
+  </div>
+  <div class="hint">Try: <b data-q="kajang freehold">kajang freehold</b> · <b data-q="shah alam under 300k">shah alam under 300k</b> · <b data-q="condo 4r">condo 4r</b> · <b data-q="non bumi puchong">non bumi puchong</b></div>
+</div></section>
+
+<div class="layout">
+  <aside class="filters" id="filters" aria-label="Filters">
+    <div class="fhead"><h2>Filters</h2><button class="linkbtn" id="reset">Reset all</button></div>
+    <div class="fgroup"><label class="lbl">Region</label><div class="chips" data-f="region"></div></div>
+    <div class="fgroup"><label class="lbl" for="fArea">Area</label><select class="sel" id="fArea"></select></div>
+    <div class="fgroup"><label class="lbl">Budget (price from)</label>
+      <div class="row2">
+        <select class="sel" id="fMin" aria-label="Minimum price"></select>
+        <select class="sel" id="fMax" aria-label="Maximum price"></select>
+      </div>
+    </div>
+    <div class="fgroup"><label class="lbl">Bedrooms</label><div class="chips" data-f="beds"></div></div>
+    <div class="fgroup"><label class="lbl">Min CashOut <span class="rangeval" id="cashVal"></span></label>
+      <input type="range" class="range" id="fCash" min="0" max="100" step="5" value="0" aria-label="Minimum CashOut percent">
+      <label class="check"><input type="checkbox" id="fVerify"> Hide prices that need checking</label>
+    </div>
+    <div class="fgroup"><label class="lbl">Type</label><div class="chips" data-f="type"></div></div>
+    <div class="fgroup"><label class="lbl">Tenure</label><div class="chips" data-f="tenure"></div></div>
+    <div class="fgroup"><label class="lbl">Title</label><div class="chips" data-f="title"></div></div>
+    <div class="fgroup"><label class="lbl">Bumi status</label><div class="chips" data-f="bumi"></div></div>
+    <button class="fclose" id="fclose">Show results</button>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main>
+    <div class="toolbar">
+      <div class="count" id="count"></div>
+      <div class="sp"></div>
+      <button class="tbtn only-mobile" id="fopen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filters <span class="badge" id="fcount" hidden></span></button>
+      <select class="sort" id="sort" aria-label="Sort by">
+        <option value="rel">Best match</option>
+        <option value="cashPct">Highest CashOut %</option>
+        <option value="cash">Highest CashOut RM</option>
+        <option value="pminAsc">Price: low to high</option>
+        <option value="pminDesc">Price: high to low</option>
+        <option value="psf">Cheapest per sqft</option>
+        <option value="sqft">Largest size</option>
+        <option value="name">Name A–Z</option>
+      </select>
+      <div class="seg" role="group" aria-label="View">
+        <button data-view="cards" aria-pressed="true">Cards</button>
+        <button data-view="table" aria-pressed="false">Table</button>
+      </div>
+      <button class="tbtn primary" id="slopen">★ Shortlist <span class="badge" id="slcount">0</span></button>
+    </div>
+    <div class="active-filters" id="active"></div>
+    <div id="results"></div>
+  </main>
+</div>
+<footer>CashOut = Bank Value − lowest price. Bedrooms, size and title are read from listing notes and may be incomplete. Always verify with the bank before advising.</footer>
+
+<dialog id="detail"></dialog>
+<dialog id="shortlist"></dialog>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+(() => {
+const DATA = window.PROPERTY_DATA;
+const P = DATA.properties;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rm = n => n == null ? "–" : "RM " + n.toLocaleString("en-MY");
+const rmk = n => n == null ? "–" : n >= 1e6 ? "RM " + (n/1e6).toFixed(2).replace(/\.?0+$/,"") + "m" : "RM " + Math.round(n/1000) + "k";
+const byId = new Map(P.map(p => [p.id, p]));
+
+/* ---------- Search index ---------- */
+const SYN = {pangsapuri:"apartment",apt:"apartment",apartmen:"apartment",kondominium:"condominium",condo:"condominium",kondo:"condominium",
+  kl:"kuala lumpur",pj:"petaling jaya",residensi:"residence",residences:"residence",service:"serviced",taman:"taman",tmn:"taman",
+  jln:"jalan",bkt:"bukit",sg:"sungai",sri:"seri",seri:"seri",freehld:"freehold",fh:"freehold",lh:"leasehold",ttdi:"ttdi"};
+const norm = s => String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9\s]/g," ");
+const words = s => norm(s).split(/\s+/).filter(Boolean).flatMap(w => SYN[w] ? SYN[w].split(" ").concat(w) : [w]);
+P.forEach(p => {
+  p._name = new Set(words(p.name));
+  p._loc = new Set(words([p.area, p.hood, p.region].join(" ")));
+  p._rest = new Set(words([p.type, p.tenure, p.title, p.bumi, p.corner ? "corner" : "", p.notes.join(" ")].join(" ")));
+});
+function lev(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 9;
+  let prev = Array.from({length: b.length + 1}, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function tokenScore(tok, set, fuzzy) {
+  let best = 0;
+  for (const w of set) {
+    if (w === tok) return 3;
+    if (w.startsWith(tok)) best = Math.max(best, 2);
+    else if (fuzzy && tok.length >= 4) {
+      const d = Math.min(lev(tok, w.slice(0, tok.length)), lev(tok, w));
+      if (d <= (tok.length >= 6 ? 2 : 1)) best = Math.max(best, d === 1 ? 1.5 : 0.6);
+    }
+  }
+  return best;
+}
+/* Typo matching only kicks in for words that match nothing exactly, so "kajang" stays strict but "setpak" still finds Setapak. */
+const exactCache = new Map();
+function needsFuzzy(t) {
+  if (!exactCache.has(t)) exactCache.set(t, !P.some(p => [p._name, p._loc, p._rest].some(set => tokenScore(t, set, false))));
+  return exactCache.get(t);
+}
+/* Pull "smart" bits out of the query: budget, bedrooms, tenure keywords. */
+function parseQuery(q) {
+  const out = {terms: [], max: null, min: null, beds: null};
+  let s = norm(q.replace(/(\d)\s*k\b/gi, "$1000").replace(/(\d)\s*(?:m|mil)\b/gi, (m, d) => d + "000000"));
+  s = s.replace(/\b(?:under|below|bawah|max|budget|within|less than|<)\s*(?:rm\s*)?(\d{5,7})\b/g, (_, n) => { out.max = +n; return " "; });
+  s = s.replace(/\b(?:above|over|min|from|atas|>)\s*(?:rm\s*)?(\d{5,7})\b/g, (_, n) => { out.min = +n; return " "; });
+  s = s.replace(/\b(\d)\s*(?:r|rooms?|bed(?:rooms?)?|bilik|br)\b/g, (_, n) => { out.beds = +n; return " "; });
+  s = s.replace(/\bnon\s+bumi\b/g, " nonbumi ");
+  for (const w of s.split(/\s+/).filter(Boolean)) {
+    if (/^\d{5,7}$/.test(w)) { out.max = +w; continue; }
+    if (["the","and","in","at","near","di","dekat","for","rm"].includes(w)) continue;
+    out.terms.push(SYN[w] ? SYN[w].split(" ")[0] : w);
+  }
+  return out;
+}
+function matchScore(p, terms) {
+  let total = 0;
+  for (const t of terms) {
+    if (t === "nonbumi") { if (p.bumi !== "Non-Bumi") return 0; total += 3; continue; }
+    const f = needsFuzzy(t);
+    const s = Math.max(tokenScore(t, p._name, f) * 3, tokenScore(t, p._loc, f) * 2.5, tokenScore(t, p._rest, f));
+    if (!s) return 0;
+    total += s;
+  }
+  return total;
+}
+
+/* ---------- State ---------- */
+const DEFAULT = {q:"", region:[], area:"", min:0, max:0, beds:[], cash:0, verify:false, type:[], tenure:[], title:[], bumi:[], sort:"rel", view:"cards"};
+let S = structuredClone(DEFAULT);
+let tableSort = null;
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+let shortlist = new Set(store.get("mg_shortlist", []).filter(id => byId.has(id)));
+
+function readURL() {
+  const u = new URLSearchParams(location.search);
+  for (const k of Object.keys(DEFAULT)) {
+    if (!u.has(k)) continue;
+    const v = u.get(k);
+    if (Array.isArray(DEFAULT[k])) S[k] = v.split(",").filter(Boolean);
+    else if (typeof DEFAULT[k] === "number") S[k] = +v || 0;
+    else if (typeof DEFAULT[k] === "boolean") S[k] = v === "1";
+    else S[k] = v;
+  }
+  S.view = store.get("mg_view", "cards");
+}
+function writeURL() {
+  const u = new URLSearchParams();
+  for (const [k, d] of Object.entries(DEFAULT)) {
+    const v = S[k];
+    if (k === "view") continue;
+    if (Array.isArray(d) ? v.length : v !== d) u.set(k, Array.isArray(v) ? v.join(",") : typeof v === "boolean" ? "1" : v);
+  }
+  history.replaceState(null, "", u.toString() ? "?" + u : location.pathname);
+}
+
+/* ---------- Filter UI ---------- */
+const count = (key, val) => P.filter(p => String(p[key]) === String(val)).length;
+const OPTS = {
+  region: [...new Set(P.map(p => p.region))].sort((a,b) => count("region",b) - count("region",a)),
+  beds: ["1","2","3","4+"],
+  type: ["Apartment","Condominium","Serviced Residence","Townhouse"].filter(t => count("type", t)),
+  tenure: ["Freehold","Leasehold"],
+  title: ["Strata","Master","Unknown"],
+  bumi: ["Non-Bumi","Bumi lot"],
+};
+function buildChips() {
+  document.querySelectorAll(".chips[data-f]").forEach(box => {
+    const f = box.dataset.f;
+    box.innerHTML = OPTS[f].map(v => `<button type="button" data-v="${esc(v)}" aria-pressed="false">${esc(v)}</button>`).join("");
+    box.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      const v = b.dataset.v, arr = S[f];
+      const i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v);
+      update();
+    });
+  });
+  const areas = [...new Set(P.map(p => p.area))].map(a => [a, P.filter(p => p.area === a).length]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  $("#fArea").innerHTML = `<option value="">All areas (${areas.length})</option>` + areas.map(([a, n]) => `<option value="${esc(a)}">${esc(a)} (${n})</option>`).join("");
+  const steps = [100,150,200,250,300,350,400,450,500,600,800].map(k => k * 1000);
+  $("#fMin").innerHTML = `<option value="0">No min</option>` + steps.map(v => `<option value="${v}">${rmk(v)}</option>`).join("");
+  $("#fMax").innerHTML = `<option value="0">No max</option>` + steps.map(v => `<option value="${v}">${rmk(v)}</option>`).join("");
+}
+function syncControls() {
+  document.querySelectorAll(".chips[data-f]").forEach(box => {
+    box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", S[box.dataset.f].includes(b.dataset.v)));
+  });
+  $("#fArea").value = S.area; $("#fMin").value = S.min; $("#fMax").value = S.max;
+  $("#fCash").value = S.cash; $("#cashVal").textContent = S.cash ? "≥ " + S.cash + "%" : "Any";
+  $("#fVerify").checked = S.verify; $("#sort").value = S.sort;
+  if ($("#q").value !== S.q) $("#q").value = S.q;
+  $("#sbox").classList.toggle("has", !!S.q);
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === S.view));
+}
+
+/* ---------- Filtering ---------- */
+function compute() {
+  const pq = parseQuery(S.q);
+  const max = Math.min(S.max || Infinity, pq.max || Infinity), min = Math.max(S.min, pq.min || 0);
+  const beds = S.beds.length ? S.beds : pq.beds ? [pq.beds >= 4 ? "4+" : String(pq.beds)] : [];
+  const res = [];
+  for (const p of P) {
+    if (S.region.length && !S.region.includes(p.region)) continue;
+    if (S.area && p.area !== S.area) continue;
+    if (min && (p.pmin ?? 0) < min) continue;
+    if (max !== Infinity && (p.pmin ?? Infinity) > max) continue;
+    if (beds.length && !beds.includes(p.beds >= 4 ? "4+" : String(p.beds))) continue;
+    if (S.cash && !(p.cashPct >= S.cash)) continue;
+    if (S.verify && p.verify) continue;
+    if (S.type.length && !S.type.includes(p.type)) continue;
+    if (S.tenure.length && !S.tenure.includes(p.tenure)) continue;
+    if (S.title.length && !S.title.includes(p.title || "Unknown")) continue;
+    if (S.bumi.length && !S.bumi.includes(p.bumi)) continue;
+    let score = 1;
+    if (pq.terms.length) { score = matchScore(p, pq.terms); if (!score) continue; }
+    res.push([p, score]);
+  }
+  const nullLast = (a, b, f) => (a == null) - (b == null) || f();
+  const cmp = {
+    // Rows flagged "check price" sink below clean rows when ranking by CashOut.
+    rel: (a, b) => b[1] - a[1] || (a[0].verify - b[0].verify) || (b[0].cashPct ?? -1e9) - (a[0].cashPct ?? -1e9),
+    cashPct: (a, b) => (a[0].verify - b[0].verify) || nullLast(a[0].cashPct, b[0].cashPct, () => b[0].cashPct - a[0].cashPct),
+    cash: (a, b) => (a[0].verify - b[0].verify) || nullLast(a[0].cash, b[0].cash, () => b[0].cash - a[0].cash),
+    pminAsc: (a, b) => a[0].pmin - b[0].pmin,
+    pminDesc: (a, b) => b[0].pmin - a[0].pmin,
+    psf: (a, b) => nullLast(a[0].psf, b[0].psf, () => a[0].psf - b[0].psf),
+    sqft: (a, b) => nullLast(a[0].sqft, b[0].sqft, () => b[0].sqft - a[0].sqft),
+    name: (a, b) => a[0].name.localeCompare(b[0].name),
+  }[S.sort] || (() => 0);
+  res.sort(cmp);
+  return {list: res.map(r => r[0]), pq};
+}
+
+/* ---------- Rendering ---------- */
+const starSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/></svg>`;
+const loc = p => [p.hood, p.area !== p.hood ? p.area : ""].filter(Boolean).join(", ") + (p.region !== "Selangor" && p.region !== p.area ? " · " + p.region : "");
+function tags(p) {
+  const t = [];
+  if (p.beds) t.push(p.beds + " bed");
+  if (p.baths) t.push(p.baths + " bath");
+  if (p.sqft) t.push(p.sqft.toLocaleString() + " sqft");
+  if (p.parking) t.push(p.parking + " parking");
+  t.push(p.tenure);
+  if (p.title) t.push(p.title + " title");
+  if (p.bumi) t.push(p.bumi);
+  if (p.corner) t.push("Corner");
+  return t.map(x => `<span class="tag">${esc(x)}</span>`).join("") + (p.verify ? `<span class="tag warn">Check price</span>` : "");
+}
+function cashBox(p) {
+  if (p.cash == null) return "";
+  const neg = p.cash < 0;
+  return `<div class="cash ${neg ? "neg" : ""}"><span>CashOut ${neg ? "−" : "+"}${rmk(Math.abs(p.cash))}</span><span class="pct">${p.cashPct > 0 ? "+" : ""}${p.cashPct}%</span></div>`;
+}
+function card(p) {
+  return `<article class="card" data-id="${p.id}" tabindex="0">
+    <button class="star" data-star="${p.id}" aria-pressed="${shortlist.has(p.id)}" aria-label="Shortlist">${starSVG}</button>
+    <div><div class="nm">${esc(p.name)}</div><div class="loc">${esc(loc(p))} · ${esc(p.type)}</div></div>
+    <div class="prices">
+      <div><div class="k">Price range</div><div class="v">${rmk(p.pmin)}${p.pmax && p.pmax !== p.pmin ? " – " + rmk(p.pmax).replace("RM ", "") : ""}</div></div>
+      <div><div class="k">Bank value</div><div class="v">${rmk(p.bank)}</div></div>
+    </div>
+    ${cashBox(p)}
+    <div class="tags">${tags(p)}</div>
+  </article>`;
+}
+const COLS = [
+  ["name","Property",p => `<td class="nm">${shortlist.has(p.id) ? "★ " : ""}${esc(p.name)}</td>`],
+  ["area","Area",p => `<td>${esc(p.hood ? p.hood + ", " + p.area : p.area)}</td>`],
+  ["type","Type",p => `<td>${esc(p.type)}</td>`],
+  ["beds","Bed",p => `<td class="num">${p.beds ?? "–"}</td>`,1],
+  ["sqft","Sqft",p => `<td class="num">${p.sqft?.toLocaleString() ?? "–"}</td>`,1],
+  ["pmin","Price from",p => `<td class="num">${rmk(p.pmin)}</td>`,1],
+  ["pmax","Price to",p => `<td class="num">${rmk(p.pmax)}</td>`,1],
+  ["bank","Bank value",p => `<td class="num">${rmk(p.bank)}</td>`,1],
+  ["cashPct","CashOut",p => `<td class="num"><span class="${p.cash < 0 ? "r" : "g"}">${p.cashPct ?? "–"}%</span>${p.verify ? " ⚠" : ""}</td>`,1],
+  ["psf","RM/sqft",p => `<td class="num">${p.psf ?? "–"}</td>`,1],
+  ["tenure","Tenure",p => `<td>${esc(p.tenure)}</td>`],
+  ["title","Title",p => `<td>${esc(p.title || "–")}</td>`],
+];
+function table(list) {
+  if (tableSort) {
+    const [k, dir] = tableSort;
+    list = [...list].sort((a, b) => {
+      const x = a[k], y = b[k];
+      if (x == null || x === "") return 1; if (y == null || y === "") return -1;
+      return (typeof x === "string" ? x.localeCompare(y) : x - y) * dir;
+    });
+  }
+  return `<div class="tablewrap"><table><thead><tr>${COLS.map(([k, l, , n]) =>
+    `<th class="${n ? "num" : ""}" data-k="${k}" ${tableSort?.[0] === k ? `aria-sort="${tableSort[1] > 0 ? "ascending" : "descending"}"` : ""}>${l}${tableSort?.[0] === k ? (tableSort[1] > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}</tr></thead>
+  <tbody>${list.map(p => `<tr data-id="${p.id}">${COLS.map(c => c[2](p)).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+function activeChips(pq) {
+  const a = [];
+  const add = (label, fn) => a.push([label, fn]);
+  S.region.forEach(v => add(v, () => S.region = S.region.filter(x => x !== v)));
+  if (S.area) add(S.area, () => S.area = "");
+  if (S.min) add("From " + rmk(S.min), () => S.min = 0);
+  if (S.max) add("Up to " + rmk(S.max), () => S.max = 0);
+  if (pq.max && !S.max) add("Up to " + rmk(pq.max) + " (from search)", null);
+  if (pq.beds && !S.beds.length) add(pq.beds + " bed (from search)", null);
+  S.beds.forEach(v => add(v + " bed", () => S.beds = S.beds.filter(x => x !== v)));
+  if (S.cash) add("CashOut ≥ " + S.cash + "%", () => S.cash = 0);
+  if (S.verify) add("Hide price checks", () => S.verify = false);
+  ["type","tenure","title","bumi"].forEach(k => S[k].forEach(v => add(v, () => S[k] = S[k].filter(x => x !== v))));
+  activeFns = a.map(x => x[1]);
+  $("#active").innerHTML = a.map(([l, f], i) => `<button data-i="${i}" ${f ? "" : "disabled"}>${esc(l)}${f ? " ×" : ""}</button>`).join("");
+  const n = a.filter(x => x[1]).length;
+  $("#fcount").hidden = !n; $("#fcount").textContent = n;
+}
+let activeFns = [];
+
+function render() {
+  const {list, pq} = compute();
+  $("#count").innerHTML = `${list.length} <small>of ${P.length} properties</small>`;
+  activeChips(pq);
+  const out = $("#results");
+  if (!list.length) {
+    out.innerHTML = `<div class="empty"><b>No matches.</b><br>Try fewer words or <button class="linkbtn" id="reset2">reset filters</button>.</div>`;
+    $("#reset2").onclick = resetAll;
+  } else out.innerHTML = S.view === "table" ? table(list) : `<div class="grid">${list.map(card).join("")}</div>`;
+  $("#slcount").textContent = shortlist.size;
+}
+function update() { syncControls(); writeURL(); render(); }
+
+/* ---------- Detail ---------- */
+function waText(p) {
+  return `*${p.name}*\n📍 ${loc(p)}\n🏢 ${p.type} · ${p.tenure}${p.title ? " · " + p.title + " title" : ""}\n` +
+    `${[p.beds && p.beds + "R", p.baths && p.baths + "B", p.sqft && p.sqft + " sqft"].filter(Boolean).join(" · ")}\n` +
+    `💰 Price: ${rm(p.pmin)}${p.pmax !== p.pmin ? " – " + rm(p.pmax) : ""}\n🏦 Bank value: ${rm(p.bank)}\n` +
+    (p.cash != null ? `✅ CashOut: ${rm(p.cash)} (${p.cashPct}%)\n` : "");
+}
+function openDetail(id) {
+  const p = byId.get(id), d = $("#detail");
+  const cashMax = p.bank && p.pmax ? p.bank - p.pmax : null;
+  const fact = (k, v, cls = "") => `<div class="fact ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.name + " " + (p.hood || "") + " " + p.area + " Malaysia");
+  d.innerHTML = `<div class="mhead"><h3>${esc(p.name)}</h3><div class="loc">${esc(loc(p))} · ${esc(p.type)}</div>
+      <button class="mclose" data-close aria-label="Close">×</button></div>
+    <div class="mbody">
+      ${p.verify ? `<div class="note-warn">⚠ The price spread here is unusual (possible typo or auction price). Double-check before quoting to a client.</div>` : ""}
+      <div class="facts">
+        ${fact("Price from", rm(p.pmin))}${fact("Price to", rm(p.pmax))}${fact("Bank value", rm(p.bank))}
+        ${fact("CashOut (from min)", p.cash == null ? "–" : rm(p.cash) + " · " + p.cashPct + "%", p.cash < 0 ? "bad" : "hl")}
+        ${fact("CashOut (at max)", cashMax == null ? "–" : rm(cashMax), cashMax < 0 ? "bad" : cashMax > 0 ? "hl" : "")}
+        ${fact("Price / sqft", p.psf ? "RM " + p.psf : "–")}
+        ${fact("Bedrooms", p.beds ?? "–")}${fact("Bathrooms", p.baths ?? "–")}${fact("Built-up", p.sqft ? p.sqft.toLocaleString() + " sqft" : "–")}
+        ${fact("Tenure", esc(p.tenure))}${fact("Title", esc(p.title || "Unknown") + (p.titleInferred ? " <small style='color:var(--ink-3);font-weight:500'>(from notes)</small>" : ""))}
+        ${fact("Parking", p.parking ?? "–")}
+      </div>
+      <div class="tags">${p.bumi ? `<span class="tag">${esc(p.bumi)}</span>` : ""}${p.corner ? `<span class="tag">Corner unit</span>` : ""}${p.walkup ? `<span class="tag">Walk-up</span>` : ""}</div>
+      ${p.notes.length ? `<h4>Listing notes</h4><ul class="notes">${p.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+      <div class="actions">
+        <button class="tbtn primary" data-star="${p.id}">${shortlist.has(p.id) ? "★ In shortlist" : "☆ Add to shortlist"}</button>
+        <button class="tbtn" data-copy="${p.id}">Copy for WhatsApp</button>
+        <a class="tbtn" href="${maps}" target="_blank" rel="noopener">Open in Google Maps</a>
+      </div>
+    </div>`;
+  if (!d.open) d.showModal();
+}
+function openShortlist() {
+  const d = $("#shortlist"), items = [...shortlist].map(id => byId.get(id)).filter(Boolean);
+  d.innerHTML = `<div class="mhead"><h3>★ Shortlist (${items.length})</h3><div class="loc">Saved on this device</div>
+    <button class="mclose" data-close aria-label="Close">×</button></div>
+    <div class="mbody">${items.length ? items.map(p => `<div class="sl-item"><div><div class="nm">${esc(p.name)}</div>
+      <div class="meta">${esc(p.area)} · ${rmk(p.pmin)} · bank ${rmk(p.bank)} · CashOut ${p.cashPct ?? "–"}%</div></div>
+      <button class="tbtn" data-unstar="${p.id}" aria-label="Remove">Remove</button></div>`).join("") : `<p style="color:var(--ink-2)">Tap the ☆ on any property to save it here, then copy the list to WhatsApp for your client.</p>`}
+      ${items.length ? `<div class="actions"><button class="tbtn primary" id="copyAll">Copy all for WhatsApp</button><button class="tbtn" id="slTable">Show only these</button><button class="tbtn" id="slClear">Clear</button></div>` : ""}
+    </div>`;
+  if (!d.open) d.showModal();
+  if (!items.length) return;
+  $("#copyAll").onclick = () => copy(items.map(waText).join("\n") + "\n— MortgageGuru", `Copied ${items.length} properties`);
+  $("#slClear").onclick = () => { shortlist.clear(); saveSL(); openShortlist(); };
+  $("#slTable").onclick = () => { d.close(); resetAll(); renderOnly(items); };
+}
+function renderOnly(items) {
+  $("#count").innerHTML = `${items.length} <small>shortlisted</small>`;
+  $("#results").innerHTML = S.view === "table" ? table(items) : `<div class="grid">${items.map(card).join("")}</div>`;
+}
+function saveSL() { store.set("mg_shortlist", [...shortlist]); $("#slcount").textContent = shortlist.size; }
+function toggleStar(id) {
+  shortlist.has(id) ? shortlist.delete(id) : shortlist.add(id);
+  saveSL();
+  document.querySelectorAll(`[data-star="${id}"]`).forEach(b => {
+    if (b.classList.contains("star")) b.setAttribute("aria-pressed", shortlist.has(id));
+    else b.textContent = shortlist.has(id) ? "★ In shortlist" : "☆ Add to shortlist";
+  });
+  toast(shortlist.has(id) ? "Added to shortlist" : "Removed from shortlist");
+}
+let tt;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 1600); }
+async function copy(text, msg) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  toast(msg || "Copied");
+}
+function resetAll() { const v = S.view; S = structuredClone(DEFAULT); S.view = v; tableSort = null; update(); }
+
+/* ---------- Events ---------- */
+let qt;
+$("#q").addEventListener("input", e => { clearTimeout(qt); qt = setTimeout(() => { S.q = e.target.value; update(); }, 120); });
+$("#qclear").onclick = () => { S.q = ""; update(); $("#q").focus(); };
+document.querySelectorAll(".hint b").forEach(b => b.onclick = () => { S.q = b.dataset.q; update(); });
+$("#fArea").onchange = e => { S.area = e.target.value; update(); };
+$("#fMin").onchange = e => { S.min = +e.target.value; update(); };
+$("#fMax").onchange = e => { S.max = +e.target.value; update(); };
+$("#fCash").oninput = e => { S.cash = +e.target.value; update(); };
+$("#fVerify").onchange = e => { S.verify = e.target.checked; update(); };
+$("#sort").onchange = e => { S.sort = e.target.value; tableSort = null; update(); };
+$("#reset").onclick = resetAll;
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { S.view = b.dataset.view; store.set("mg_view", S.view); update(); });
+$("#active").onclick = e => { const b = e.target.closest("button"); if (b && activeFns[b.dataset.i]) { activeFns[b.dataset.i](); update(); } };
+const fl = $("#filters"), scrim = $("#scrim");
+const setFilters = open => { fl.classList.toggle("open", open); scrim.classList.toggle("show", open); };
+$("#fopen").onclick = () => setFilters(true);
+$("#fclose").onclick = scrim.onclick = () => setFilters(false);
+$("#slopen").onclick = openShortlist;
+$("#results").addEventListener("click", e => {
+  const star = e.target.closest("[data-star]");
+  if (star) { e.stopPropagation(); toggleStar(+star.dataset.star); return; }
+  const th = e.target.closest("th[data-k]");
+  if (th) { const k = th.dataset.k; tableSort = tableSort?.[0] === k ? [k, -tableSort[1]] : [k, ["name","area","type","tenure","title","pmin","psf"].includes(k) ? 1 : -1]; render(); return; }
+  const it = e.target.closest("[data-id]");
+  if (it) openDetail(+it.dataset.id);
+});
+$("#results").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches(".card")) openDetail(+e.target.dataset.id); });
+for (const d of [$("#detail"), $("#shortlist")]) {
+  d.addEventListener("click", e => {
+    if (e.target === d || e.target.closest("[data-close]")) return d.close();
+    const s = e.target.closest("[data-star]"); if (s) toggleStar(+s.dataset.star);
+    const c = e.target.closest("[data-copy]"); if (c) copy(waText(byId.get(+c.dataset.copy)) + "— MortgageGuru", "Copied for WhatsApp");
+    const u = e.target.closest("[data-unstar]"); if (u) { shortlist.delete(+u.dataset.unstar); saveSL(); openShortlist(); }
+  });
+  d.addEventListener("close", render);
+}
+document.addEventListener("keydown", e => { if (e.key === "/" && document.activeElement !== $("#q") && !document.querySelector("dialog[open]")) { e.preventDefault(); $("#q").focus(); } });
+
+/* ---------- Init ---------- */
+const areaCount = new Set(P.map(p => p.area)).size;
+const med = (a => a[Math.floor(a.length / 2)])(P.map(p => p.cashPct).filter(x => x != null).sort((a, b) => a - b));
+$("#heroStats").textContent = `${P.length} projects across ${areaCount} areas · median CashOut ${med}%`;
+$("#upd").innerHTML = `Data updated<br><b>${esc(DATA.updated)}</b>`;
+buildChips(); readURL(); update();
+})();
+</script>
+</body>
+</html>
