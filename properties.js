@@ -2,7 +2,7 @@
    Falls back to snapshot.csv in this repo if the sheet can't be reached. */
 (() => {
 // Paste the Google Sheet ID here (the long code in the sheet's URL between /d/ and /edit).
-const SHEET_ID = "";
+const SHEET_ID = "1pr64jacCCnNZEOdJgV9uROQHZa5FEtlSpX0_4tan28s";
 
 const SHEET_CSV = id => `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&headers=1&t=${Date.now()}`;
 
