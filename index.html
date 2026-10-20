@@ -119,9 +119,6 @@ main{min-width:0}
 .prices{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--bg);border-radius:10px;padding:10px 12px}
 .prices .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-3)}
 .prices .v{font-weight:800;font-size:15px}
-.cash{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:10px;padding:8px 12px;background:var(--green-bg);color:var(--green);font-weight:700;font-size:13.5px}
-.cash.neg{background:var(--red-bg);color:var(--red)}
-.cash .pct{font-size:18px;font-weight:800}
 .tags{display:flex;flex-wrap:wrap;gap:5px}
 .tag{background:var(--chip);border-radius:6px;padding:3px 8px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
 .tag.warn{background:#FFF4D1;color:#7a5800}
@@ -159,7 +156,6 @@ dialog::backdrop{background:rgba(10,20,40,.5)}
 .notes{margin:0;padding-left:18px;color:var(--ink-2);font-size:14px}
 .notes li{margin:3px 0}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.note-warn{background:#FFF4D1;color:#6b4e00;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .sl-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .sl-item .nm{font-weight:700}
 .sl-item .meta{font-size:12.5px;color:var(--ink-3)}
@@ -177,7 +173,7 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
 </div></header>
 
 <section class="hero"><div class="wrap">
-  <h1>Find the right unit, <span>see the CashOut</span> instantly</h1>
+  <h1>Find your <span>first home</span>, within your budget</h1>
   <p id="heroStats"></p>
   <div class="searchbox" id="sbox">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -205,7 +201,6 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
     <div class="fgroup"><label class="lbl">Tenure</label><div class="chips" data-f="tenure"></div></div>
     <div class="fgroup"><label class="lbl">Title</label><div class="chips" data-f="title"></div></div>
     <div class="fgroup"><label class="lbl">Bumi status</label><div class="chips" data-f="bumi"></div></div>
-    <div class="fgroup"><label class="check"><input type="checkbox" id="fVerify"> Hide prices that need checking</label></div>
     <button class="fclose" id="fclose">Show results</button>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -218,8 +213,6 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filters <span class="badge" id="fcount" hidden></span></button>
       <select class="sort" id="sort" aria-label="Sort by">
         <option value="rel">Best match</option>
-        <option value="cashPct">Highest CashOut %</option>
-        <option value="cash">Highest CashOut RM</option>
         <option value="pminAsc">Price: low to high</option>
         <option value="pminDesc">Price: high to low</option>
         <option value="psf">Cheapest per sqft</option>
@@ -236,7 +229,7 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
     <div id="results"></div>
   </main>
 </div>
-<footer>CashOut = Bank Value − lowest price. Bedrooms, size and title are read from listing notes and may be incomplete. Always verify with the bank before advising.</footer>
+<footer>Prices are indicative. Bedrooms, size and title come from listing notes and may be incomplete. Talk to MortgageGuru before making an offer.</footer>
 
 <dialog id="detail"></dialog>
 <dialog id="shortlist"></dialog>
@@ -321,7 +314,7 @@ function matchScore(p, terms) {
 }
 
 /* ---------- State ---------- */
-const DEFAULT = {q:"", area:[], min:0, max:0, beds:[], verify:false, type:[], tenure:[], title:[], bumi:[], sort:"rel", view:"cards"};
+const DEFAULT = {q:"", area:[], min:0, max:0, beds:[], type:[], tenure:[], title:[], bumi:[], sort:"rel", view:"cards"};
 let S = structuredClone(DEFAULT);
 let tableSort = null;
 const store = {
@@ -393,7 +386,7 @@ function syncControls() {
   });
   $("#fMin").value = S.min; $("#fMax").value = S.max;
   renderAreas();
-  $("#fVerify").checked = S.verify; $("#sort").value = S.sort;
+  $("#sort").value = S.sort;
   if ($("#q").value !== S.q) $("#q").value = S.q;
   $("#sbox").classList.toggle("has", !!S.q);
   document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === S.view));
@@ -410,7 +403,6 @@ function compute() {
     if (min && (p.pmin ?? 0) < min) continue;
     if (max !== Infinity && (p.pmin ?? Infinity) > max) continue;
     if (beds.length && !beds.includes(p.beds >= 4 ? "4+" : String(p.beds))) continue;
-    if (S.verify && p.verify) continue;
     if (S.type.length && !S.type.includes(p.type)) continue;
     if (S.tenure.length && !S.tenure.includes(p.tenure)) continue;
     if (S.title.length && !S.title.includes(p.title || "Unknown")) continue;
@@ -421,10 +413,8 @@ function compute() {
   }
   const nullLast = (a, b, f) => (a == null) - (b == null) || f();
   const cmp = {
-    // Rows flagged "check price" sink below clean rows when ranking by CashOut.
-    rel: (a, b) => b[1] - a[1] || (a[0].verify - b[0].verify) || (b[0].cashPct ?? -1e9) - (a[0].cashPct ?? -1e9),
-    cashPct: (a, b) => (a[0].verify - b[0].verify) || nullLast(a[0].cashPct, b[0].cashPct, () => b[0].cashPct - a[0].cashPct),
-    cash: (a, b) => (a[0].verify - b[0].verify) || nullLast(a[0].cash, b[0].cash, () => b[0].cash - a[0].cash),
+    // Rows with suspicious prices (likely typos) quietly sink to the bottom.
+    rel: (a, b) => b[1] - a[1] || (a[0].verify - b[0].verify) || a[0].pmin - b[0].pmin,
     pminAsc: (a, b) => a[0].pmin - b[0].pmin,
     pminDesc: (a, b) => b[0].pmin - a[0].pmin,
     psf: (a, b) => nullLast(a[0].psf, b[0].psf, () => a[0].psf - b[0].psf),
@@ -448,12 +438,7 @@ function tags(p) {
   if (p.title) t.push(p.title + " title");
   if (p.bumi) t.push(p.bumi);
   if (p.corner) t.push("Corner");
-  return t.map(x => `<span class="tag">${esc(x)}</span>`).join("") + (p.verify ? `<span class="tag warn">Check price</span>` : "");
-}
-function cashBox(p) {
-  if (p.cash == null) return "";
-  const neg = p.cash < 0;
-  return `<div class="cash ${neg ? "neg" : ""}"><span>CashOut ${neg ? "−" : "+"}${rmk(Math.abs(p.cash))}</span><span class="pct">${p.cashPct > 0 ? "+" : ""}${p.cashPct}%</span></div>`;
+  return t.map(x => `<span class="tag">${esc(x)}</span>`).join("");
 }
 function card(p) {
   return `<article class="card${p.photo ? " has-photo" : ""}" data-id="${p.id}" tabindex="0">
@@ -464,7 +449,6 @@ function card(p) {
       <div><div class="k">Price range</div><div class="v">${rmk(p.pmin)}${p.pmax && p.pmax !== p.pmin ? " – " + rmk(p.pmax).replace("RM ", "") : ""}</div></div>
       <div><div class="k">Bank value</div><div class="v">${rmk(p.bank)}</div></div>
     </div>
-    ${cashBox(p)}
     <div class="tags">${tags(p)}</div>
   </article>`;
 }
@@ -477,7 +461,6 @@ const COLS = [
   ["pmin","Price from",p => `<td class="num">${rmk(p.pmin)}</td>`,1],
   ["pmax","Price to",p => `<td class="num">${rmk(p.pmax)}</td>`,1],
   ["bank","Bank value",p => `<td class="num">${rmk(p.bank)}</td>`,1],
-  ["cashPct","CashOut",p => `<td class="num"><span class="${p.cash < 0 ? "r" : "g"}">${p.cashPct ?? "–"}%</span>${p.verify ? " ⚠" : ""}</td>`,1],
   ["psf","RM/sqft",p => `<td class="num">${p.psf ?? "–"}</td>`,1],
   ["tenure","Tenure",p => `<td>${esc(p.tenure)}</td>`],
   ["title","Title",p => `<td>${esc(p.title || "–")}</td>`],
@@ -504,7 +487,6 @@ function activeChips(pq) {
   if (pq.max && !S.max) add("Up to " + rmk(pq.max) + " (from search)", null);
   if (pq.beds && !S.beds.length) add(pq.beds + " bed (from search)", null);
   S.beds.forEach(v => add(v + " bed", () => S.beds = S.beds.filter(x => x !== v)));
-  if (S.verify) add("Hide price checks", () => S.verify = false);
   ["type","tenure","title","bumi"].forEach(k => S[k].forEach(v => add(v, () => S[k] = S[k].filter(x => x !== v))));
   activeFns = a.map(x => x[1]);
   $("#active").innerHTML = a.map(([l, f], i) => `<button data-i="${i}" ${f ? "" : "disabled"}>${esc(l)}${f ? " ×" : ""}</button>`).join("");
@@ -530,23 +512,18 @@ function update() { syncControls(); writeURL(); render(); }
 function waText(p) {
   return `*${p.name}*\n📍 ${loc(p)}\n🏢 ${p.type} · ${p.tenure}${p.title ? " · " + p.title + " title" : ""}\n` +
     `${[p.beds && p.beds + "R", p.baths && p.baths + "B", p.sqft && p.sqft + " sqft"].filter(Boolean).join(" · ")}\n` +
-    `💰 Price: ${rm(p.pmin)}${p.pmax !== p.pmin ? " – " + rm(p.pmax) : ""}\n🏦 Bank value: ${rm(p.bank)}\n` +
-    (p.cash != null ? `✅ CashOut: ${rm(p.cash)} (${p.cashPct}%)\n` : "");
+    `💰 Price: ${rm(p.pmin)}${p.pmax !== p.pmin ? " – " + rm(p.pmax) : ""}\n🏦 Bank value: ${rm(p.bank)}\n`;
 }
 function openDetail(id) {
   const p = byId.get(id), d = $("#detail");
-  const cashMax = p.bank && p.pmax ? p.bank - p.pmax : null;
   const fact = (k, v, cls = "") => `<div class="fact ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
   const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.name + " " + (p.hood || "") + " " + p.area + " Malaysia");
   d.innerHTML = `<div class="mhead"><h3>${esc(p.name)}</h3><div class="loc">${esc(loc(p))} · ${esc(p.type)}</div>
       <button class="mclose" data-close aria-label="Close">×</button></div>
     ${p.photo ? `<div class="mphoto" style="background-image:url('${esc(p.photo)}')"></div>` : ""}
     <div class="mbody">
-      ${p.verify ? `<div class="note-warn">⚠ The price spread here is unusual (possible typo or auction price). Double-check before quoting to a client.</div>` : ""}
       <div class="facts">
         ${fact("Price from", rm(p.pmin))}${fact("Price to", rm(p.pmax))}${fact("Bank value", rm(p.bank))}
-        ${fact("CashOut (from min)", p.cash == null ? "–" : rm(p.cash) + " · " + p.cashPct + "%", p.cash < 0 ? "bad" : "hl")}
-        ${fact("CashOut (at max)", cashMax == null ? "–" : rm(cashMax), cashMax < 0 ? "bad" : cashMax > 0 ? "hl" : "")}
         ${fact("Price / sqft", p.psf ? "RM " + p.psf : "–")}
         ${fact("Bedrooms", p.beds ?? "–")}${fact("Bathrooms", p.baths ?? "–")}${fact("Built-up", p.sqft ? p.sqft.toLocaleString() + " sqft" : "–")}
         ${fact("Tenure", esc(p.tenure))}${fact("Title", esc(p.title || "Unknown") + (p.titleInferred ? " <small style='color:var(--ink-3);font-weight:500'>(from notes)</small>" : ""))}
@@ -567,7 +544,7 @@ function openShortlist() {
   d.innerHTML = `<div class="mhead"><h3>★ Shortlist (${items.length})</h3><div class="loc">Saved on this device</div>
     <button class="mclose" data-close aria-label="Close">×</button></div>
     <div class="mbody">${items.length ? items.map(p => `<div class="sl-item"><div><div class="nm">${esc(p.name)}</div>
-      <div class="meta">${esc(p.area)} · ${rmk(p.pmin)} · bank ${rmk(p.bank)} · CashOut ${p.cashPct ?? "–"}%</div></div>
+      <div class="meta">${esc(p.area)} · ${rmk(p.pmin)} · bank value ${rmk(p.bank)}</div></div>
       <button class="tbtn" data-unstar="${p.id}" aria-label="Remove">Remove</button></div>`).join("") : `<p style="color:var(--ink-2)">Tap the ☆ on any property to save it here, then copy the list to WhatsApp for your client.</p>`}
       ${items.length ? `<div class="actions"><button class="tbtn primary" id="copyAll">Copy all for WhatsApp</button><button class="tbtn" id="slTable">Show only these</button><button class="tbtn" id="slClear">Clear</button></div>` : ""}
     </div>`;
@@ -613,7 +590,6 @@ $("#areaList").addEventListener("change", e => {
 });
 $("#fMin").onchange = e => { S.min = +e.target.value; update(); };
 $("#fMax").onchange = e => { S.max = +e.target.value; update(); };
-$("#fVerify").onchange = e => { S.verify = e.target.checked; update(); };
 $("#sort").onchange = e => { S.sort = e.target.value; tableSort = null; update(); };
 $("#reset").onclick = resetAll;
 document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { S.view = b.dataset.view; store.set("mg_view", S.view); update(); });
@@ -645,8 +621,7 @@ document.addEventListener("keydown", e => { if (e.key === "/" && document.active
 
 /* ---------- Init ---------- */
 const areaCount = new Set(P.map(p => p.area)).size;
-const med = (a => a[Math.floor(a.length / 2)])(P.map(p => p.cashPct).filter(x => x != null).sort((a, b) => a - b));
-$("#heroStats").textContent = `${P.length} projects across ${areaCount} areas · median CashOut ${med}%`;
+$("#heroStats").textContent = `${P.length} homes across ${areaCount} areas · prices from ${rmk(Math.min(...P.filter(p => !p.verify).map(p => p.pmin)))}`;
 const t = DATA.loaded.toLocaleTimeString("en-MY", {hour: "numeric", minute: "2-digit"});
 $("#upd").innerHTML = DATA.source === "live" ? `Live from Google Sheet<br><b>as of ${t}</b>` : `Offline copy<br><b>sheet unreachable</b>`;
 if (DATA.skipped.length) console.warn("Rows skipped (missing name or price):", DATA.skipped);
