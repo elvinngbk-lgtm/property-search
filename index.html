@@ -64,7 +64,15 @@ aside.filters{align-self:start;position:sticky;top:14px;background:var(--card);b
 .chips button[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
 select.sel{width:100%;height:40px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.range{width:100%;accent-color:var(--gold-dk)}
+.areaq{width:100%;height:36px;margin-bottom:6px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff}
+.arealist{max-height:232px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px}
+.arealist label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;font-size:13.5px;cursor:pointer}
+.arealist label:hover{background:var(--chip)}
+.arealist input{accent-color:var(--navy);width:15px;height:15px;margin:0}
+.arealist .n{margin-left:auto;color:var(--ink-3);font-size:12px}
+.arealist .sep{border-top:1px solid var(--line);margin:4px 0}
+.photo{margin:-16px -16px 0;height:150px;border-radius:var(--radius) var(--radius) 0 0;background:var(--chip) center/cover no-repeat}
+.mphoto{height:200px;background:var(--chip) center/cover no-repeat}
 .rangeval{font-weight:700;font-size:13px;color:var(--green)}
 .check{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-2);margin-top:4px}
 .check input{accent-color:var(--navy);width:16px;height:16px}
@@ -103,6 +111,7 @@ main{min-width:0}
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;border:1px solid transparent;transition:border-color .15s,transform .15s;position:relative}
 .card:hover{border-color:var(--gold);transform:translateY(-1px)}
 .card .nm{font-weight:800;font-size:16px;line-height:1.25;padding-right:34px}
+.card.has-photo .star{top:160px}
 .card .loc{font-size:13px;color:var(--ink-3);margin-top:2px}
 .star{position:absolute;top:12px;right:12px;border:0;background:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#C5CBD6}
 .star:hover{background:var(--chip)}
@@ -181,8 +190,10 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
 <div class="layout">
   <aside class="filters" id="filters" aria-label="Filters">
     <div class="fhead"><h2>Filters</h2><button class="linkbtn" id="reset">Reset all</button></div>
-    <div class="fgroup"><label class="lbl">Region</label><div class="chips" data-f="region"></div></div>
-    <div class="fgroup"><label class="lbl" for="fArea">Area</label><select class="sel" id="fArea"></select></div>
+    <div class="fgroup"><label class="lbl" for="areaQ">Area <span class="rangeval" id="areaVal"></span></label>
+      <input class="sel areaq" id="areaQ" type="search" placeholder="Find area…" autocomplete="off">
+      <div class="arealist" id="areaList" role="group" aria-label="Areas"></div>
+    </div>
     <div class="fgroup"><label class="lbl">Budget (price from)</label>
       <div class="row2">
         <select class="sel" id="fMin" aria-label="Minimum price"></select>
@@ -190,14 +201,11 @@ footer{text-align:center;color:var(--ink-3);font-size:12px;padding:0 16px 30px}
       </div>
     </div>
     <div class="fgroup"><label class="lbl">Bedrooms</label><div class="chips" data-f="beds"></div></div>
-    <div class="fgroup"><label class="lbl">Min CashOut <span class="rangeval" id="cashVal"></span></label>
-      <input type="range" class="range" id="fCash" min="0" max="100" step="5" value="0" aria-label="Minimum CashOut percent">
-      <label class="check"><input type="checkbox" id="fVerify"> Hide prices that need checking</label>
-    </div>
     <div class="fgroup"><label class="lbl">Type</label><div class="chips" data-f="type"></div></div>
     <div class="fgroup"><label class="lbl">Tenure</label><div class="chips" data-f="tenure"></div></div>
     <div class="fgroup"><label class="lbl">Title</label><div class="chips" data-f="title"></div></div>
     <div class="fgroup"><label class="lbl">Bumi status</label><div class="chips" data-f="bumi"></div></div>
+    <div class="fgroup"><label class="check"><input type="checkbox" id="fVerify"> Hide prices that need checking</label></div>
     <button class="fclose" id="fclose">Show results</button>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -312,7 +320,7 @@ function matchScore(p, terms) {
 }
 
 /* ---------- State ---------- */
-const DEFAULT = {q:"", region:[], area:"", min:0, max:0, beds:[], cash:0, verify:false, type:[], tenure:[], title:[], bumi:[], sort:"rel", view:"cards"};
+const DEFAULT = {q:"", area:[], min:0, max:0, beds:[], verify:false, type:[], tenure:[], title:[], bumi:[], sort:"rel", view:"cards"};
 let S = structuredClone(DEFAULT);
 let tableSort = null;
 const store = {
@@ -346,7 +354,6 @@ function writeURL() {
 /* ---------- Filter UI ---------- */
 const count = (key, val) => P.filter(p => String(p[key]) === String(val)).length;
 const OPTS = {
-  region: [...new Set(P.map(p => p.region))].sort((a,b) => count("region",b) - count("region",a)),
   beds: ["1","2","3","4+"],
   type: ["Apartment","Condominium","Serviced Residence","Townhouse"].filter(t => count("type", t)),
   tenure: ["Freehold","Leasehold"],
@@ -364,18 +371,27 @@ function buildChips() {
       update();
     });
   });
-  const areas = [...new Set(P.map(p => p.area))].map(a => [a, P.filter(p => p.area === a).length]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  $("#fArea").innerHTML = `<option value="">All areas (${areas.length})</option>` + areas.map(([a, n]) => `<option value="${esc(a)}">${esc(a)} (${n})</option>`).join("");
   const steps = [100,150,200,250,300,350,400,450,500,600,800].map(k => k * 1000);
   $("#fMin").innerHTML = `<option value="0">No min</option>` + steps.map(v => `<option value="${v}">${rmk(v)}</option>`).join("");
   $("#fMax").innerHTML = `<option value="0">No max</option>` + steps.map(v => `<option value="${v}">${rmk(v)}</option>`).join("");
+}
+/* Area checklist: ticked areas pinned on top, the rest filtered by the little search box. */
+const AREAS = [...new Set(P.map(p => p.area))].map(a => [a, count("area", a)]).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+function renderAreas() {
+  const q = norm($("#areaQ").value).trim();
+  const row = ([a, n]) => `<label><input type="checkbox" value="${esc(a)}" ${S.area.includes(a) ? "checked" : ""}>${esc(a)}<span class="n">${n}</span></label>`;
+  const picked = AREAS.filter(([a]) => S.area.includes(a));
+  const rest = AREAS.filter(([a]) => !S.area.includes(a) && (!q || norm(a).includes(q)));
+  $("#areaList").innerHTML = picked.map(row).join("") + (picked.length && rest.length ? `<div class="sep"></div>` : "") + rest.map(row).join("")
+    || `<div style="padding:8px;color:var(--ink-3);font-size:13px">No area matches</div>`;
+  $("#areaVal").textContent = S.area.length ? S.area.length + " selected" : "";
 }
 function syncControls() {
   document.querySelectorAll(".chips[data-f]").forEach(box => {
     box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", S[box.dataset.f].includes(b.dataset.v)));
   });
-  $("#fArea").value = S.area; $("#fMin").value = S.min; $("#fMax").value = S.max;
-  $("#fCash").value = S.cash; $("#cashVal").textContent = S.cash ? "≥ " + S.cash + "%" : "Any";
+  $("#fMin").value = S.min; $("#fMax").value = S.max;
+  renderAreas();
   $("#fVerify").checked = S.verify; $("#sort").value = S.sort;
   if ($("#q").value !== S.q) $("#q").value = S.q;
   $("#sbox").classList.toggle("has", !!S.q);
@@ -389,12 +405,10 @@ function compute() {
   const beds = S.beds.length ? S.beds : pq.beds ? [pq.beds >= 4 ? "4+" : String(pq.beds)] : [];
   const res = [];
   for (const p of P) {
-    if (S.region.length && !S.region.includes(p.region)) continue;
-    if (S.area && p.area !== S.area) continue;
+    if (S.area.length && !S.area.includes(p.area)) continue;
     if (min && (p.pmin ?? 0) < min) continue;
     if (max !== Infinity && (p.pmin ?? Infinity) > max) continue;
     if (beds.length && !beds.includes(p.beds >= 4 ? "4+" : String(p.beds))) continue;
-    if (S.cash && !(p.cashPct >= S.cash)) continue;
     if (S.verify && p.verify) continue;
     if (S.type.length && !S.type.includes(p.type)) continue;
     if (S.tenure.length && !S.tenure.includes(p.tenure)) continue;
@@ -441,7 +455,8 @@ function cashBox(p) {
   return `<div class="cash ${neg ? "neg" : ""}"><span>CashOut ${neg ? "−" : "+"}${rmk(Math.abs(p.cash))}</span><span class="pct">${p.cashPct > 0 ? "+" : ""}${p.cashPct}%</span></div>`;
 }
 function card(p) {
-  return `<article class="card" data-id="${p.id}" tabindex="0">
+  return `<article class="card${p.photo ? " has-photo" : ""}" data-id="${p.id}" tabindex="0">
+    ${p.photo ? `<div class="photo" style="background-image:url('${esc(p.photo)}')"></div>` : ""}
     <button class="star" data-star="${p.id}" aria-pressed="${shortlist.has(p.id)}" aria-label="Shortlist">${starSVG}</button>
     <div><div class="nm">${esc(p.name)}</div><div class="loc">${esc(loc(p))} · ${esc(p.type)}</div></div>
     <div class="prices">
@@ -482,14 +497,12 @@ function table(list) {
 function activeChips(pq) {
   const a = [];
   const add = (label, fn) => a.push([label, fn]);
-  S.region.forEach(v => add(v, () => S.region = S.region.filter(x => x !== v)));
-  if (S.area) add(S.area, () => S.area = "");
+  S.area.forEach(v => add(v, () => S.area = S.area.filter(x => x !== v)));
   if (S.min) add("From " + rmk(S.min), () => S.min = 0);
   if (S.max) add("Up to " + rmk(S.max), () => S.max = 0);
   if (pq.max && !S.max) add("Up to " + rmk(pq.max) + " (from search)", null);
   if (pq.beds && !S.beds.length) add(pq.beds + " bed (from search)", null);
   S.beds.forEach(v => add(v + " bed", () => S.beds = S.beds.filter(x => x !== v)));
-  if (S.cash) add("CashOut ≥ " + S.cash + "%", () => S.cash = 0);
   if (S.verify) add("Hide price checks", () => S.verify = false);
   ["type","tenure","title","bumi"].forEach(k => S[k].forEach(v => add(v, () => S[k] = S[k].filter(x => x !== v))));
   activeFns = a.map(x => x[1]);
@@ -526,6 +539,7 @@ function openDetail(id) {
   const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.name + " " + (p.hood || "") + " " + p.area + " Malaysia");
   d.innerHTML = `<div class="mhead"><h3>${esc(p.name)}</h3><div class="loc">${esc(loc(p))} · ${esc(p.type)}</div>
       <button class="mclose" data-close aria-label="Close">×</button></div>
+    ${p.photo ? `<div class="mphoto" style="background-image:url('${esc(p.photo)}')"></div>` : ""}
     <div class="mbody">
       ${p.verify ? `<div class="note-warn">⚠ The price spread here is unusual (possible typo or auction price). Double-check before quoting to a client.</div>` : ""}
       <div class="facts">
@@ -590,10 +604,14 @@ let qt;
 $("#q").addEventListener("input", e => { clearTimeout(qt); qt = setTimeout(() => { S.q = e.target.value; update(); }, 120); });
 $("#qclear").onclick = () => { S.q = ""; update(); $("#q").focus(); };
 document.querySelectorAll(".hint b").forEach(b => b.onclick = () => { S.q = b.dataset.q; update(); });
-$("#fArea").onchange = e => { S.area = e.target.value; update(); };
+$("#areaQ").addEventListener("input", renderAreas);
+$("#areaList").addEventListener("change", e => {
+  const v = e.target.value;
+  S.area = e.target.checked ? [...S.area, v] : S.area.filter(x => x !== v);
+  update();
+});
 $("#fMin").onchange = e => { S.min = +e.target.value; update(); };
 $("#fMax").onchange = e => { S.max = +e.target.value; update(); };
-$("#fCash").oninput = e => { S.cash = +e.target.value; update(); };
 $("#fVerify").onchange = e => { S.verify = e.target.checked; update(); };
 $("#sort").onchange = e => { S.sort = e.target.value; tableSort = null; update(); };
 $("#reset").onclick = resetAll;
